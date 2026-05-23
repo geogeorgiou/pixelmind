@@ -1,5 +1,5 @@
 {
-  "name": "@org/api-products",
+  "name": "@org/api-google-genai",
   "version": "0.0.1",
   "private": true,
   "main": "./dist/index.js",
@@ -20,9 +20,8 @@
     ]
   },
   "dependencies": {
-    "tslib": "^2.3.0"
-  },
-  "devDependencies": {
-    "@org/models": "*"
+    "@org/models": "*",
+    "tslib": "^2.3.0",
+    "@google/genai": "^2.6.0"
   }
 }

@@ -1,20 +1,19 @@
 import express from 'express';
-import { ProductsService } from '@org/api-products';
-import { ApiResponse, Product, ProductFilter, PaginatedResponse } from '@org/models';
+import { ImageGenerationService } from '@org/api-google-genai';
+import { apiConfig } from './config';
+import { generateImageSchema } from './api.model';
 
-const host = process.env.HOST ?? 'localhost';
-const port = process.env.PORT ? Number(process.env.PORT) : 3333;
+const { host, port, geminiApiKey, outputDir, serviceName } = apiConfig;
 
 const app = express();
-const productsService = new ProductsService();
+const imageService = new ImageGenerationService(geminiApiKey);
 
-// Middleware
 app.use(express.json());
+app.use('/images', express.static(outputDir));
 
-// CORS configuration for React app
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -23,95 +22,43 @@ app.use((req, res, next) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send({ message: 'Hello API' });
+app.get('/', (_req, res) => {
+  res.json({ message: serviceName });
 });
 
-// Products endpoints
-app.get('/api/products', (req, res) => {
-  try {
-    const filter: ProductFilter = {};
+app.post('/api/images/generate', async (req, res) => {
+  const parsed = generateImageSchema.safeParse(req.body);
 
-    if (req.query.category) {
-      filter.category = req.query.category as string;
-    }
-    if (req.query.minPrice) {
-      filter.minPrice = Number(req.query.minPrice);
-    }
-    if (req.query.maxPrice) {
-      filter.maxPrice = Number(req.query.maxPrice);
-    }
-    if (req.query.inStock !== undefined) {
-      filter.inStock = req.query.inStock === 'true';
-    }
-    if (req.query.searchTerm) {
-      filter.searchTerm = req.query.searchTerm as string;
-    }
-
-    const page = req.query.page ? Number(req.query.page) : 1;
-    const pageSize = req.query.pageSize ? Number(req.query.pageSize) : 10;
-
-    const result = productsService.getProducts(filter, page, pageSize);
-
-    const response: ApiResponse<PaginatedResponse<Product>> = {
-      data: result,
-      success: true,
-    };
-
-    res.json(response);
-  } catch (error) {
-    const response: ApiResponse<any> = {
-      data: null,
-      success: false,
-      error: 'An error occurred while fetching products',
-    };
-    res.status(500).json(response);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: parsed.error.flatten().fieldErrors });
   }
-});
 
-app.get('/api/products/categories', (req, res) => {
+  const { prompt, numberOfImages, aspectRatio, outputMimeType, save } = parsed.data;
+
   try {
-    const categories = productsService.getCategories();
-    const response: ApiResponse<string[]> = {
-      data: categories,
-      success: true,
-    };
-    res.json(response);
-  } catch (error) {
-    const response: ApiResponse<any> = {
-      data: null,
-      success: false,
-      error: 'An error occurred while fetching categories',
-    };
-    res.status(500).json(response);
-  }
-});
+    const options = { prompt, numberOfImages, aspectRatio, outputMimeType };
 
-app.get('/api/products/:id', (req, res) => {
-  try {
-    const product = productsService.getProductById(req.params.id);
-
-    if (!product) {
-      const response: ApiResponse<any> = {
-        data: null,
-        success: false,
-        error: 'Product not found',
-      };
-      return res.status(404).json(response);
+    if (save) {
+      const result = await imageService.generateAndSave(options, outputDir);
+      const baseUrl = `http://${host}:${port}`;
+      return res.json({
+        success: true,
+        data: {
+          prompt: result.prompt,
+          images: result.saved.map((img) => ({
+            filename: img.filename,
+            url: `${baseUrl}/images/${img.filename}`,
+            mimeType: img.mimeType,
+          })),
+        },
+      });
     }
 
-    const response: ApiResponse<Product> = {
-      data: product,
-      success: true,
-    };
-    return res.json(response);
+    const result = await imageService.generateImages(options);
+    return res.json({ success: true, data: result });
   } catch (error) {
-    const response: ApiResponse<any> = {
-      data: null,
-      success: false,
-      error: 'An error occurred while fetching the product',
-    };
-    return res.status(500).json(response);
+    const message = error instanceof Error ? error.message : 'Image generation failed';
+    return res.status(500).json({ success: false, error: message });
   }
 });
 

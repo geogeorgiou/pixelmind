@@ -1,0 +1,1 @@
+export type ImageGenerationModel = 'imagen-4.0-generate-001';

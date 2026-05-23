@@ -2,9 +2,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   root: __dirname,
-  cacheDir: '../../../node_modules/.vite/libs/api/products',
+  cacheDir: '../../../node_modules/.vite/libs/api/google-genai',
   test: {
-    name: '@org/products',
+    name: '@org/api-google-genai',
     watch: false,
     globals: true,
     environment: 'node',

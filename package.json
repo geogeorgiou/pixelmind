@@ -5,10 +5,13 @@
   "scripts": {},
   "private": true,
   "dependencies": {
+    "@google/genai": "^2.6.0",
+    "dotenv": "^17.4.2",
     "express": "^4.21.2",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-router-dom": "6.30.3"
+    "react-router-dom": "6.30.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",
@@ -66,8 +69,7 @@
   },
   "workspaces": [
     "apps/*",
-    "libs/api/products",
-    "libs/shared/*",
-    "libs/shop/*"
+    "libs/api/google-genai",
+    "libs/shared/*"
   ]
 }

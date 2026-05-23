@@ -24,6 +24,11 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# environment
+.env
+.env.local
+.env.*.local
+
 # misc
 /.sass-cache
 /connect.lock
@@ -51,3 +56,6 @@ test-output
 .claude/settings.local.json
 .nx/polygraph
 .nx/self-healing
+
+# Generated
+generated-images

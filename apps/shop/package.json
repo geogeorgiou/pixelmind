@@ -18,10 +18,6 @@
     }
   },
   "devDependencies": {
-    "@org/models": "*",
-    "@org/shop-data": "*",
-    "@org/shop-feature-product-detail": "*",
-    "@org/shop-feature-products": "*",
-    "@org/shop-shared-ui": "*"
+    "@org/models": "*"
   }
 }
